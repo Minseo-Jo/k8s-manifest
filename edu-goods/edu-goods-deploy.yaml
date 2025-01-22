@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edu-goods-deployment
+  namespace: edu-goods
+  labels:
+    app: edu-goods
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: edu-goods
+  template:
+    metadata:
+      labels:
+        app: edu-goods
+    spec:
+      containers:
+        - name: edu-goods
+          image: choms0209/k8s-edu:v0.0.6
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: "1"
+              memory: "2Gi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod 
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      imagePullSecrets:
+        - name: edu-goods-secret
+        
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: edu-goods-service
+  namespace: edu-goods
+spec:
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  selector:
+    app: edu-goods
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: edu-goods-ingress
+  namespace: edu-goods
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: "edu-goods.211.254.212.192.sslip.io"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: edu-goods-service
+                port:
+                  number: 80
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: edu-goods-hpa
+  namespace: edu-goods
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: edu-goods-deployment
+  minReplicas: 2
+  maxReplicas: 3
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 30
