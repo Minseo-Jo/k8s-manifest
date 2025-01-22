@@ -8,7 +8,7 @@ on: workflow_dispatch
 
 ## 워크플로우 전역에서 사용할 환경 변수  
 env:
-  REPO_ACCOUNT: choms0209
+  REPO_ACCOUNT: Minseo-Jo
   IMAGE_NAME: k8s-edu
 
 ## 실행할 작업 정의 
